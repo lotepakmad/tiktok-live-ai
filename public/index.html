@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiveDemo — AI Host</title>
+<style>
+  :root {
+    --bg: #09090b;
+    --panel: #16161a;
+    --panel2: #1f1f26;
+    --border: #2c2c35;
+    --text: #f1f1f4;
+    --muted: #9a9aa5;
+    --pink: #fe2c55;      /* warna merah muda khas TikTok */
+    --cyan: #25f4ee;
+    --gold: #ffd166;
+    --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  /* ============ phone frame ============ */
+  #phone {
+    position: relative;
+    width: min(430px, 100vw);
+    height: min(932px, 100vh);
+    background: #000;
+    overflow: hidden;
+    border-radius: 24px;
+    box-shadow: 0 0 60px rgba(0,0,0,.8);
+  }
+  @media (max-width: 480px) { #phone { border-radius: 0; } }
+
+  /* ============ video placeholder ============ */
+  #video {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 90% at 20% 10%, rgba(254,44,85,.35), transparent 55%),
+      radial-gradient(110% 90% at 85% 85%, rgba(37,244,238,.28), transparent 55%),
+      linear-gradient(160deg, #1a1024, #0c1620 60%, #101018);
+    background-size: 200% 200%;
+    animation: bgmove 14s ease-in-out infinite alternate;
+  }
+  @keyframes bgmove { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
+  #avatar-big {
+    position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%);
+    width: 168px; height: 168px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #3a2b4d, #191223 70%);
+    border: 2px solid rgba(254,44,85,.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 84px;
+    box-shadow: 0 0 46px rgba(254,44,85,.35), inset 0 0 30px rgba(0,0,0,.6);
+    animation: breathe 3.4s ease-in-out infinite;
+    user-select: none;
+  }
+  @keyframes breathe { 0%,100% { transform: translate(-50%,-50%) scale(1); } 50% { transform: translate(-50%,-50%) scale(1.045); } }
+  #avatar-big.talking {
+    animation: talk .26s ease-in-out infinite alternate;
+    border-color: var(--cyan);
+    box-shadow: 0 0 62px rgba(37,244,238,.5), inset 0 0 30px rgba(0,0,0,.6);
+  }
+  @keyframes talk { from { transform: translate(-50%,-50%) scale(1.01); } to { transform: translate(-50%,-50%) scale(1.07); } }
+  #avatar-tag {
+    position: absolute; left: 50%; top: calc(42% + 100px); transform: translateX(-50%);
+    font-size: 12px; color: var(--muted); background: rgba(0,0,0,.45);
+    padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .fade-top { position: absolute; top: 0; left: 0; right: 0; height: 130px; background: linear-gradient(rgba(0,0,0,.55), transparent); pointer-events: none; }
+  .fade-bottom { position: absolute; bottom: 0; left: 0; right: 0; height: 320px; background: linear-gradient(transparent, rgba(0,0,0,.72)); pointer-events: none; }
+
+  /* ============ header ============ */
+  #header {
+    position: absolute; top: 12px; left: 10px; right: 10px;
+    display: flex; align-items: center; gap: 8px; z-index: 20;
+  }
+  #host-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,0,0,.42); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 999px; padding: 4px 4px 4px 5px;
+  }
+  #host-ava {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--pink), #8a1e63);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  #host-meta { line-height: 1.15; }
+  #host-meta b { font-size: 13px; display: block; }
+  #host-meta span { font-size: 10.5px; color: #d9d9e2; }
+  #btn-follow {
+    background: var(--pink); border: 0; color: #fff; font-weight: 700;
+    font-size: 11.5px; padding: 5px 11px; border-radius: 999px; cursor: pointer;
+  }
+  #btn-follow.following { background: rgba(255,255,255,.16); }
+  #viewers {
+    margin-left: auto; display: flex; align-items: center; gap: 5px;
+    background: rgba(0,0,0,.42); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.10);
+    padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  }
+  #viewers .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 8px var(--pink); animation: blink 1.6s infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+  #live-badge {
+    position: absolute; top: 58px; left: 14px; z-index: 20;
+    background: var(--pink); font-size: 10.5px; font-weight: 800; letter-spacing: .8px;
+    padding: 2.5px 8px; border-radius: 5px;
+  }
+
+  /* ============ kanan: rail aksi ============ */
+  #rail {
+    position: absolute; right: 10px; bottom: 170px; z-index: 20;
+    display: flex; flex-direction: column; gap: 20px; align-items: center;
+  }
+  .rail-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: none; border: 0; cursor: pointer; color: #fff;
+    font-size: 27px; filter: drop-shadow(0 2px 5px rgba(0,0,0,.6));
+  }
+  .rail-btn small { font-size: 10px; font-weight: 700; color: #e8e8ee; }
+  .rail-btn:active { transform: scale(.86); }
+  #like-count.anim { animation: pop .3s ease; }
+  @keyframes pop { 50% { transform: scale(1.35); } }
+
+  /* hati melayang */
+  .float-heart {
+    position: absolute; right: 26px; bottom: 235px; z-index: 25;
+    font-size: 26px; pointer-events: none;
+    animation: floatup 1.5s ease-out forwards;
+  }
+  @keyframes floatup {
+    0% { transform: translateY(0) scale(.6); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translateY(-240px) translateX(var(--drift, 0px)) scale(1.15); opacity: 0; }
+  }
+
+  /* ============ komentar ============ */
+  #chat {
+    position: absolute; left: 12px; bottom: 76px; z-index: 15;
+    width: min(300px, 72%); max-height: 38vh; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+    -webkit-mask-image: linear-gradient(transparent, #000 14%);
+            mask-image: linear-gradient(transparent, #000 14%);
+  }
+  .msg {
+    align-self: flex-start; max-width: 100%;
+    background: rgba(0,0,0,.38); backdrop-filter: blur(4px);
+    padding: 6px 10px; border-radius: 14px;
+    font-size: 13.5px; line-height: 1.35; word-break: break-word;
+    animation: msgin .25s ease;
+  }
+  @keyframes msgin { from { transform: translateY(8px); opacity: 0; } }
+  .msg .who { color: #9fd8ff; font-size: 12.5px; margin-right: 5px; }
+  .msg.host { background: rgba(254,44,85,.28); border: 1px solid rgba(254,44,85,.5); }
+  .msg.host .who { color: #ffd7e2; font-weight: 700; }
+  .msg .badge {
+    display: inline-block; background: var(--pink); color: #fff;
+    font-size: 9.5px; font-weight: 800; padding: 1px 5px; border-radius: 4px;
+    margin-right: 5px; vertical-align: 1px;
+  }
+  .msg.giftmsg { background: rgba(255,209,102,.18); border: 1px solid rgba(255,209,102,.45); color: #ffe9b3; }
+  .msg.typing { background: rgba(254,44,85,.16); border: 1px solid rgba(254,44,85,.35); color: #ffc9d8; font-size: 12.5px; font-style: italic; }
+  .msg.typing .tdots::after {
+    content: ""; animation: tdot 1.2s steps(4) infinite;
+  }
+  @keyframes tdot { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+
+  /* banner "bergabung" */
+  #join-pill {
+    position: absolute; left: 12px; bottom: calc(38vh + 84px); z-index: 16;
+    background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.14);
+    color: #cfd7ff; font-size: 11.5px; padding: 4px 10px; border-radius: 999px;
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+  }
+  #join-pill.show { opacity: 1; }
+
+  /* ============ bar bawah ============ */
+  #bottom {
+    position: absolute; left: 10px; right: 10px; bottom: 12px; z-index: 20;
+    display: flex; gap: 8px; align-items: center;
+  }
+  #c-form { flex: 1; display: flex; gap: 6px; }
+  #c-input {
+    flex: 1; background: rgba(0,0,0,.45); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.16); border-radius: 999px;
+    color: #fff; font-size: 13.5px; padding: 10px 15px; outline: none;
+  }
+  #c-input::placeholder { color: rgba(255,255,255,.55); }
+  #c-send {
+    background: none; border: 0; color: var(--cyan); font-weight: 800;
+    font-size: 13.5px; cursor: pointer; padding: 0 4px;
+  }
+  #c-send:disabled { color: var(--muted); }
+  .bottom-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.16);
+    color: #fff; font-size: 19px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bottom-btn:active { transform: scale(.9); }
+
+  /* ============ gift sheet ============ */
+  #gift-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 40;
+    background: var(--panel); border-top: 1px solid var(--border);
+    border-radius: 18px 18px 0 0; padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+    transform: translateY(105%); transition: transform .28s cubic-bezier(.2,.9,.25,1);
+    box-shadow: 0 -18px 50px rgba(0,0,0,.6);
+  }
+  #gift-sheet.open { transform: translateY(0); }
+  #gs-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  #gs-head b { font-size: 14.5px; }
+  #gs-coin {
+    margin-left: auto; display: flex; align-items: center; gap: 5px;
+    background: var(--panel2); border: 1px solid var(--border);
+    padding: 5px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--gold);
+  }
+  #gs-close { background: none; border: 0; color: var(--muted); font-size: 18px; cursor: pointer; }
+  #gs-top { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+  #gs-top b { color: var(--gold); font-weight: 600; }
+  #gs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .gift-item {
+    background: var(--panel2); border: 1px solid var(--border); border-radius: 14px;
+    padding: 11px 4px 9px; text-align: center; cursor: pointer;
+    transition: border-color .15s, transform .1s;
+  }
+  .gift-item:hover { border-color: var(--pink); }
+  .gift-item:active { transform: scale(.93); }
+  .gift-item .em { font-size: 30px; display: block; }
+  .gift-item .nm { font-size: 10.5px; color: #d6d6de; display: block; margin-top: 3px; }
+  .gift-item .pr { font-size: 10.5px; color: var(--gold); font-weight: 700; }
+  #gs-note { font-size: 10px; color: var(--muted); margin-top: 10px; text-align: center; }
+
+  /* ============ combo / gift showcase ============ */
+  #combo-box {
+    position: absolute; right: 12px; bottom: 330px; z-index: 30;
+    display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+    pointer-events: none;
+  }
+  .combo {
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(0,0,0,.55); border: 1px solid rgba(255,209,102,.5);
+    padding: 6px 12px; border-radius: 999px;
+    animation: comboin .35s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes comboin { from { transform: translateX(40px) scale(.6); opacity: 0; } }
+  .combo .em { font-size: 26px; }
+  .combo .who { font-size: 11.5px; color: #ffe9b3; }
+  .combo .cnt { font-size: 17px; font-weight: 900; color: var(--gold); text-shadow: 0 0 12px rgba(255,209,102,.8); animation: pop .3s ease; }
+  .combo.out { transition: opacity .5s, transform .5s; opacity: 0; transform: translateY(-14px); }
+
+  #toast {
+    position: absolute; left: 50%; top: 84px; transform: translateX(-50%); z-index: 60;
+    background: rgba(0,0,0,.78); border: 1px solid var(--border);
+    padding: 8px 16px; border-radius: 10px; font-size: 12.5px;
+    opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+
+  #topgifters {
+    position: absolute; top: 58px; right: 12px; z-index: 19;
+    background: rgba(0,0,0,.42); border: 1px solid rgba(255,255,255,.10);
+    border-radius: 12px; padding: 6px 10px; font-size: 10.5px; color: #d9d9e2;
+    display: none;
+  }
+  #topgifters b { color: var(--gold); }
+  #topgifters div { line-height: 1.5; }
+</style>
+</head>
+<body>
+<div id="phone">
+  <div id="video"></div>
+  <div id="avatar-big">👩‍🎤</div>
+  <div id="avatar-tag">AI Host · otomatis 24 jam</div>
+  <div class="fade-top"></div>
+  <div class="fade-bottom"></div>
+
+  <div id="header">
+    <div id="host-chip">
+      <div id="host-ava">🤖</div>
+      <div id="host-meta"><b>AI Host</b><span id="host-sub">live demo</span></div>
+      <button id="btn-follow">Follow</button>
+    </div>
+    <div id="viewers"><span class="dot"></span><span id="viewer-n">—</span></div>
+  </div>
+  <div id="live-badge">LIVE</div>
+  <div id="topgifters"></div>
+
+  <div id="combo-box"></div>
+  <div id="join-pill"></div>
+  <div id="chat"></div>
+
+  <div id="rail">
+    <button class="rail-btn" id="btn-like">💗<small id="like-count">0</small></button>
+    <button class="rail-btn" id="btn-chat">💬<small>Komentar</small></button>
+    <button class="rail-btn" id="btn-gift">🎁<small>Gift</small></button>
+    <button class="rail-btn" id="btn-sound">🔊<small id="sound-state">Suara</small></button>
+    <button class="rail-btn" id="btn-share">↗️<small>Share</small></button>
+  </div>
+
+  <div id="bottom">
+    <form id="c-form">
+      <input id="c-input" placeholder="Kirim komentar…" maxlength="200" autocomplete="off">
+      <button id="c-send" type="submit">Kirim</button>
+    </form>
+    <button class="bottom-btn" id="btn-gift2">🎁</button>
+  </div>
+
+  <div id="gift-sheet">
+    <div id="gs-head">
+      <b>Kirim Gift</b>
+      <div id="gs-coin">🪙 <span id="coin-n">10.000</span></div>
+      <button id="gs-close">✕</button>
+    </div>
+    <div id="gs-top">Top gifter: <span id="gs-top-list">belum ada</span></div>
+    <div id="gs-grid"></div>
+    <div id="gs-note">Demo — coin virtual, tidak ada transaksi nyata</div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
+
+let meName = localStorage.getItem("dtl_name") || "Kamu";
+let coin = 10000;
+let likes = 0;
+let joinTimer = null;
+
+/* ---------- toast ---------- */
+let toastTimer = null;
+function toast(msg) {
+  $("toast").textContent = msg;
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $("toast").classList.remove("show"), 2200);
+}
+
+/* ---------- chat ---------- */
+function addMsg(m) {
+  const d = document.createElement("div");
+  d.className = "msg" + (m.isHost ? " host" : "");
+  d.innerHTML = (m.isHost ? `<span class="badge">HOST</span>` : "") +
+    `<span class="who">${esc(m.name)}</span>${esc(m.text)}`;
+  $("chat").appendChild(d);
+  while ($("chat").children.length > 40) $("chat").firstChild.remove();
+}
+
+function addGiftMsg(ev) {
+  const d = document.createElement("div");
+  d.className = "msg giftmsg";
+  d.textContent = `${ev.name} mengirim ${ev.gift.emoji} ${ev.gift.name} ${ev.combo > 1 ? "x" + ev.combo : ""}`;
+  $("chat").appendChild(d);
+  while ($("chat").children.length > 40) $("chat").firstChild.remove();
+}
+
+/* ---------- combo showcase ---------- */
+function showCombo(ev) {
+  const d = document.createElement("div");
+  d.className = "combo";
+  d.innerHTML = `<span class="who">${esc(ev.name)}</span><span class="em">${ev.gift.emoji}</span><span class="cnt">x${ev.combo}</span>`;
+  $("combo-box").appendChild(d);
+  while ($("combo-box").children.length > 3) $("combo-box").firstChild.remove();
+  setTimeout(() => d.classList.add("out"), 4200);
+  setTimeout(() => d.remove(), 4900);
+}
+
+/* ---------- join pill ---------- */
+function showJoin(name) {
+  $("join-pill").textContent = `${name} bergabung`;
+  $("join-pill").classList.add("show");
+  clearTimeout(joinTimer);
+  joinTimer = setTimeout(() => $("join-pill").classList.remove("show"), 2600);
+}
+
+/* ---------- stats ---------- */
+function setStats(s) {
+  $("viewer-n").textContent = fmt(s.viewers);
+  $("like-count").textContent = fmt(s.likes);
+  likes = s.likes;
+}
+
+/* ---------- top gifters ---------- */
+function setTopGifters(list) {
+  if (!list || !list.length) { $("topgifters").style.display = "none"; return; }
+  $("topgifters").style.display = "block";
+  $("topgifters").innerHTML = "👑 Top gifter<br>" +
+    list.slice(0, 3).map((g, i) => `<div>${i + 1}. ${esc(g.name)} · <b>${fmt(g.coin)}</b></div>`).join("");
+  $("gs-top-list").textContent = list.map((g) => `${g.name} (${fmt(g.coin)})`).join(" · ");
+}
+
+/* ---------- SSE ---------- */
+let es = null;
+function connect() {
+  es = new EventSource("/events");
+  es.addEventListener("state", (e) => {
+    const s = JSON.parse(e.data);
+    setStats(s);
+    setTopGifters(s.topGifters);
+    ($("chat").children.length === 0) && (s.recent || []).forEach(addMsg);
+  });
+  es.addEventListener("comment", (e) => addMsg(JSON.parse(e.data)));
+  es.addEventListener("host_reply", (e) => { const m = JSON.parse(e.data); addMsg(m); speak(m.text); });
+  es.addEventListener("host_typing", () => {
+    if ($("typing-msg")) return;
+    const d = document.createElement("div");
+    d.className = "msg typing"; d.id = "typing-msg";
+    d.innerHTML = `<span class="who">AI Host</span> sedang mengetik<span class="tdots"></span>`;
+    $("chat").appendChild(d);
+    while ($("chat").children.length > 40) $("chat").firstChild.remove();
+  });
+  es.addEventListener("host_typing_end", () => { const t = $("typing-msg"); if (t) t.remove(); });
+  es.addEventListener("gift", (e) => { const ev = JSON.parse(e.data); addGiftMsg(ev); showCombo(ev); });
+  es.addEventListener("presence", (e) => showJoin(JSON.parse(e.data).name));
+  es.addEventListener("stats", (e) => setStats(JSON.parse(e.data)));
+  es.onerror = () => {}; /* EventSource reconnect otomatis */
+}
+connect();
+
+/* ---------- suara host (Web Speech API) ---------- */
+let soundOn = localStorage.getItem("dtl_sound") !== "0"; // default: menyala
+let voices = [];
+function loadVoices() { voices = window.speechSynthesis ? speechSynthesis.getVoices() || [] : []; }
+if ("speechSynthesis" in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+
+function pickVoice() {
+  const idf = voices.filter((v) => /^id[-_]/i.test(v.lang));
+  const female = idf.find((v) => /gadis|damayanti|female|wanita/i.test(v.name));
+  return female || idf[0] || voices.find((v) => /^ms[-_]/i.test(v.lang)) || null;
+}
+function speak(text) {
+  if (!soundOn || !("speechSynthesis" in window)) return;
+  const clean = String(text).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F\u200D]/gu, " ").replace(/\s+/g, " ").trim();
+  if (!clean) return;
+  const u = new SpeechSynthesisUtterance(clean);
+  const v = pickVoice();
+  if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "id-ID"; }
+  u.rate = 1.04; u.pitch = 1.12; u.volume = 1;
+  u.onstart = () => $("avatar-big").classList.add("talking");
+  u.onend = u.onerror = () => $("avatar-big").classList.remove("talking");
+  try { speechSynthesis.cancel(); speechSynthesis.speak(u); } catch {}
+  window.__speech = { last: clean, t: Date.now(), voice: v ? v.name : "(default)" }; // jejak utk verifikasi
+}
+function updSoundBtn() {
+  $("btn-sound").firstChild.textContent = soundOn ? "🔊" : "🔇";
+  $("sound-state").textContent = soundOn ? "Suara" : "Senyap";
+}
+$("btn-sound").onclick = () => {
+  soundOn = !soundOn;
+  localStorage.setItem("dtl_sound", soundOn ? "1" : "0");
+  updSoundBtn();
+  if (soundOn) speak("suara host aktif"); else speechSynthesis.cancel();
+};
+updSoundBtn();
+
+/* ---------- kirim komentar ---------- */
+$("c-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = $("c-input").value.trim();
+  if (!text) return;
+  if (!meName || meName === "Kamu") {
+    const n = prompt("Nama kamu (tampil di komentar):", meName === "Kamu" ? "" : meName);
+    if (n && n.trim()) { meName = n.trim().slice(0, 24); localStorage.setItem("dtl_name", meName); }
+  }
+  $("c-input").value = "";
+  const r = await fetch("/api/comment", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: meName, text }),
+  }).then((x) => x.json()).catch(() => null);
+  if (!r || !r.ok) toast("gagal kirim komentar");
+});
+
+/* ---------- gift sheet ---------- */
+let gifts = [];
+function renderGrid() {
+  $("gs-grid").innerHTML = gifts.map((g) => `
+    <div class="gift-item" data-id="${g.id}">
+      <span class="em">${g.emoji}</span>
+      <span class="nm">${esc(g.name)}</span>
+      <span class="pr">🪙 ${fmt(g.coin)}</span>
+    </div>`).join("");
+  document.querySelectorAll(".gift-item").forEach((el) => {
+    el.addEventListener("click", () => sendGift(el.dataset.id));
+  });
+}
+function openSheet() { $("gift-sheet").classList.add("open"); }
+function closeSheet() { $("gift-sheet").classList.remove("open"); }
+$("btn-gift").onclick = openSheet;
+$("btn-gift2").onclick = openSheet;
+$("gs-close").onclick = closeSheet;
+
+async function sendGift(id) {
+  const g = gifts.find((x) => x.id === id);
+  if (!g) return;
+  if (g.coin > coin) { toast("coin tidak cukup (demo: koin virtual kamu " + fmt(coin) + ")"); return; }
+  coin -= g.coin;
+  $("coin-n").textContent = fmt(coin);
+  const combo = 1 + Math.floor(Math.random() * 9);
+  const r = await fetch("/api/gift", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ gift: id, name: meName, combo }),
+  }).then((x) => x.json()).catch(() => null);
+  if (!r || !r.ok) toast("gagal kirim gift");
+}
+
+/* ---------- like + follow + share ---------- */
+let likeBurst = 0;
+$("btn-like").onclick = () => {
+  const h = document.createElement("div");
+  h.className = "float-heart";
+  h.textContent = ["💗", "❤️", "💛", "💙"][Math.floor(Math.random() * 4)];
+  h.style.setProperty("--drift", (Math.random() * 60 - 30) + "px");
+  $("phone").appendChild(h);
+  setTimeout(() => h.remove(), 1600);
+  if (++likeBurst % 5 === 0) fetch("/api/like", { method: "POST" }).catch(() => {});
+  $("like-count").textContent = fmt(++likes);
+};
+$("btn-follow").onclick = () => {
+  const b = $("btn-follow");
+  const on = b.classList.toggle("following");
+  b.textContent = on ? "Following ✓" : "Follow";
+  toast(on ? "Kamu follow AI Host!" : "Unfollow");
+};
+$("btn-share").onclick = () => toast("Demo — share belum aktif");
+$("btn-chat").onclick = () => $("c-input").focus();
+$("c-input").addEventListener("focus", () => { if (!meName || meName === "Kamu") { /* tanya sekali saat fokus pertama */ } });
+
+/* ---------- init ---------- */
+(async function init() {
+  const s = await fetch("/api/state").then((x) => x.json()).catch(() => null);
+  if (!s) { toast("server tidak merespon"); return; }
+  gifts = s.gifts || [];
+  renderGrid();
+  setStats(s);
+  setTopGifters(s.topGifters);
+  (s.recent || []).slice(-30).forEach(addMsg);
+  $("coin-n").textContent = fmt(coin);
+  updSoundBtn();
+})();
+</script>
+</body>
+</html>

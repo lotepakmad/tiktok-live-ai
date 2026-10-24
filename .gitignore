@@ -1,0 +1,10 @@
+# RAHASIA — jangan pernah commit API key
+config.json
+
+# Biner besar (download manual, lihat README)
+cloudflared.exe
+
+# Runtime / lokal
+node_modules/
+*.log
+backup/
