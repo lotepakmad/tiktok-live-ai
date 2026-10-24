@@ -41,22 +41,34 @@
   /* ============ video placeholder ============ */
   #video {
     position: absolute; inset: 0;
+    /* latar JARVIS: dasar navy gelap + glow cyan di belakang orb (42%) */
     background:
-      radial-gradient(120% 90% at 20% 10%, rgba(254,44,85,.35), transparent 55%),
-      radial-gradient(110% 90% at 85% 85%, rgba(37,244,238,.28), transparent 55%),
-      linear-gradient(160deg, #1a1024, #0c1620 60%, #101018);
+      radial-gradient(55% 42% at 50% 42%, rgba(37,244,238,.22), transparent 72%),
+      radial-gradient(120% 90% at 15% 8%, rgba(8,48,66,.60), transparent 55%),
+      radial-gradient(110% 90% at 88% 88%, rgba(6,34,52,.55), transparent 55%),
+      linear-gradient(160deg, #050a11, #04121a 55%, #060a10);
     background-size: 200% 200%;
     animation: bgmove 14s ease-in-out infinite alternate;
+  }
+  /* grid HUD halus — menerang di tengah (belakang orb), memudar ke tepi */
+  #video::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(37,244,238,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37,244,238,.055) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(68% 52% at 50% 42%, #000 20%, transparent 78%);
+            mask-image: radial-gradient(68% 52% at 50% 42%, #000 20%, transparent 78%);
   }
   @keyframes bgmove { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
   #avatar-big {
     position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%);
     width: 168px; height: 168px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #3a2b4d, #191223 70%);
-    border: 2px solid rgba(254,44,85,.5);
+    background: radial-gradient(circle at 35% 30%, #0a1b24, #05090d 70%);
+    border: 1.5px solid rgba(37,244,238,.32);
     display: flex; align-items: center; justify-content: center;
-    font-size: 84px;
-    box-shadow: 0 0 46px rgba(254,44,85,.35), inset 0 0 30px rgba(0,0,0,.6);
+    font-size: 0;
+    box-shadow: 0 0 46px rgba(37,244,238,.18), inset 0 0 30px rgba(0,0,0,.6);
     animation: breathe 3.4s ease-in-out infinite;
     user-select: none;
   }
@@ -72,6 +84,44 @@
     font-size: 12px; color: var(--muted); background: rgba(0,0,0,.45);
     padding: 3px 10px; border-radius: 999px; white-space: nowrap;
   }
+  /* ============ inti JARVIS (avatar host) ============ */
+  .jv { position: absolute; inset: 0; }
+  .jv span { position: absolute; border-radius: 50%; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .jv-sweep { inset: 9px; background: conic-gradient(rgba(37,244,238,.40), rgba(37,244,238,0) 72deg); animation: spin 3.6s linear infinite; }
+  .jv-r1 { inset: 9px; border: 2px dashed rgba(37,244,238,.55); animation: spin 22s linear infinite; }
+  .jv-r2 { inset: 21px; border: 2.5px solid transparent; border-top-color: rgba(37,244,238,.9); border-right-color: rgba(37,244,238,.30); animation: spin 7s linear infinite reverse; }
+  .jv-r3 { inset: 33px; border: 1.5px dotted rgba(159,247,255,.55); border-left-color: transparent; animation: spin 13s linear infinite; }
+  .jv-core {
+    left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; /* center via margin: transform bebas untuk animasi */
+    background: radial-gradient(circle at 35% 30%, #c9fdff, #25f4ee 42%, #0b6b73 78%, #06323a);
+    border: 1px solid rgba(160,255,255,.7);
+    box-shadow: 0 0 26px rgba(37,244,238,.75), 0 0 62px rgba(37,244,238,.30);
+    animation: jvpulse 3.4s ease-in-out infinite;
+  }
+  @keyframes jvpulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.055); } }
+  @keyframes jvtalk { from { transform: scale(1.03); } to { transform: scale(1.12); } }
+  .jv-wave { left: 50%; bottom: 14px; height: 24px; width: auto; transform: translateX(-50%);
+             display: none; gap: 4px; align-items: flex-end; }
+  .jv-wave i { width: 4px; height: 6px; border-radius: 2px; background: var(--cyan);
+               box-shadow: 0 0 8px rgba(37,244,238,.9); animation: jvw .45s ease-in-out infinite alternate; }
+  .jv-wave i:nth-child(2) { animation-delay: .12s; } .jv-wave i:nth-child(3) { animation-delay: .24s; }
+  .jv-wave i:nth-child(4) { animation-delay: .06s; } .jv-wave i:nth-child(5) { animation-delay: .18s; }
+  @keyframes jvw { from { height: 5px; opacity: .6; } to { height: 22px; opacity: 1; } }
+  /* host bersuara → ring ngebut, core flash, waveform muncul, mini orb header ikut */
+  #avatar-big.talking .jv-sweep { animation-duration: 1.1s; }
+  #avatar-big.talking .jv-r1 { animation-duration: 5s; }
+  #avatar-big.talking .jv-r2 { animation-duration: 1.7s; }
+  #avatar-big.talking .jv-r3 { animation-duration: 3.2s; }
+  #avatar-big.talking .jv-core { animation: jvtalk .28s ease-in-out infinite alternate;
+    box-shadow: 0 0 36px rgba(37,244,238,.95), 0 0 78px rgba(37,244,238,.45); }
+  #avatar-big.talking .jv-wave { display: flex; }
+  #avatar-big.talking ~ #header #host-ava .rg { animation-duration: 2.2s; }
+  #avatar-big.talking ~ #header #host-ava .cr { box-shadow: 0 0 15px rgba(37,244,238,1), 0 0 30px rgba(37,244,238,.5); }
+  /* gift/combo → pulsa kejut gelombang dari orb */
+  #avatar-big.shock::after { content:""; position:absolute; inset:-8px; border-radius:50%;
+    border:2.5px solid rgba(37,244,238,.9); pointer-events:none; animation: shock .75s ease-out forwards; }
+  @keyframes shock { from { transform:scale(.9); opacity:1; } to { transform:scale(1.8); opacity:0; } }
   .fade-top { position: absolute; top: 0; left: 0; right: 0; height: 130px; background: linear-gradient(rgba(0,0,0,.55), transparent); pointer-events: none; }
   .fade-bottom { position: absolute; bottom: 0; left: 0; right: 0; height: 320px; background: linear-gradient(transparent, rgba(0,0,0,.72)); pointer-events: none; }
 
@@ -88,9 +138,15 @@
   }
   #host-ava {
     width: 34px; height: 34px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--pink), #8a1e63);
-    display: flex; align-items: center; justify-content: center; font-size: 18px;
+    background: radial-gradient(circle at 35% 30%, #0b1c26, #04090d);
+    border: 1px solid rgba(37,244,238,.35);
+    position: relative; overflow: hidden; font-size: 0;
   }
+  .jv-mini { position: absolute; inset: 0; }
+  .jv-mini .rg { position: absolute; inset: 3px; border-radius: 50%; border: 1.5px dashed rgba(37,244,238,.75); animation: spin 9s linear infinite; }
+  .jv-mini .cr { position: absolute; left: 50%; top: 50%; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #cbfdff, #25f4ee 55%, #0b6b73);
+    box-shadow: 0 0 10px rgba(37,244,238,.95); animation: jvpulse 3.4s ease-in-out infinite; }
   #host-meta { line-height: 1.15; }
   #host-meta b { font-size: 13px; display: block; }
   #host-meta span { font-size: 10.5px; color: #d9d9e2; }
@@ -107,6 +163,7 @@
   }
   #viewers .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 8px var(--pink); animation: blink 1.6s infinite; }
   @keyframes blink { 50% { opacity: .35; } }
+  #online-pill b { color: #4ade80; } /* hijau = penonton nyata online */
   #live-badge {
     position: absolute; top: 58px; left: 14px; z-index: 20;
     background: var(--pink); font-size: 10.5px; font-weight: 800; letter-spacing: .8px;
@@ -276,18 +333,20 @@
 <body>
 <div id="phone">
   <div id="video"></div>
-  <div id="avatar-big">👩‍🎤</div>
-  <div id="avatar-tag">AI Host · otomatis 24 jam</div>
+  <div id="avatar-big"><div class="jv"><span class="jv-sweep"></span><span class="jv-r1"></span><span class="jv-r2"></span><span class="jv-r3"></span><span class="jv-core"></span><span class="jv-wave"><i></i><i></i><i></i><i></i><i></i></span></div></div>
+  <!-- tulisan tag di bawah orb JARVIS di-disable sesuai permintaan (hapus tampilan, kode dipertahankan)
+  <div id="avatar-tag">J.A.R.V.I.S · otomatis 24 jam</div>
+  -->
   <div class="fade-top"></div>
   <div class="fade-bottom"></div>
 
   <div id="header">
     <div id="host-chip">
-      <div id="host-ava">🤖</div>
+      <div id="host-ava"><span class="jv-mini"><span class="rg"></span><span class="cr"></span></span></div>
       <div id="host-meta"><b>AI Host</b><span id="host-sub">live demo</span></div>
       <button id="btn-follow">Follow</button>
     </div>
-    <div id="viewers"><span class="dot"></span><span id="viewer-n">—</span></div>
+    <div id="viewers"><span class="dot"></span><span id="viewer-n">—</span><!--<span id="online-pill" style="display:none">· <b id="online-n">0</b> online</span>--></div>
   </div>
   <div id="live-badge">LIVE</div>
   <div id="topgifters"></div>
@@ -376,18 +435,28 @@ function showCombo(ev) {
 }
 
 /* ---------- join pill ---------- */
-function showJoin(name) {
-  $("join-pill").textContent = `${name} bergabung`;
+function showJoin(text) {
+  $("join-pill").textContent = text; // teks lengkap dari pemanggil (handleEvent) — suffix "bergabung/keluar" jangan ditambah lagi di sini
   $("join-pill").classList.add("show");
   clearTimeout(joinTimer);
   joinTimer = setTimeout(() => $("join-pill").classList.remove("show"), 2600);
 }
 
 /* ---------- stats ---------- */
+/* tampilan online DI-DISABLE (comment-out) — server tetap kirim angka online; UI disembunyikan dulu
+let onlineCount = 0; // penonton nyata terhubung (live beneran)
+function updOnline() {
+  const el = $("online-n");
+  if (!el) return;
+  el.textContent = fmt(onlineCount);
+  $("online-pill").style.display = onlineCount > 0 ? "inline-flex" : "none";
+}
+*/
 function setStats(s) {
   $("viewer-n").textContent = fmt(s.viewers);
   $("like-count").textContent = fmt(s.likes);
   likes = s.likes;
+  /* if (typeof s.online === "number") { onlineCount = s.online; updOnline(); } */
 }
 
 /* ---------- top gifters ---------- */
@@ -399,33 +468,52 @@ function setTopGifters(list) {
   $("gs-top-list").textContent = list.map((g) => `${g.name} (${fmt(g.coin)})`).join(" · ");
 }
 
-/* ---------- SSE ---------- */
+/* ---------- live via polling (tahan buffering tunnel; SSE cadangan) ---------- */
 let es = null;
-function connect() {
-  es = new EventSource("/events");
-  es.addEventListener("state", (e) => {
-    const s = JSON.parse(e.data);
-    setStats(s);
-    setTopGifters(s.topGifters);
-    ($("chat").children.length === 0) && (s.recent || []).forEach(addMsg);
-  });
-  es.addEventListener("comment", (e) => addMsg(JSON.parse(e.data)));
-  es.addEventListener("host_reply", (e) => { const m = JSON.parse(e.data); addMsg(m); speak(m.text); });
-  es.addEventListener("host_typing", () => {
-    if ($("typing-msg")) return;
-    const d = document.createElement("div");
-    d.className = "msg typing"; d.id = "typing-msg";
-    d.innerHTML = `<span class="who">AI Host</span> sedang mengetik<span class="tdots"></span>`;
-    $("chat").appendChild(d);
-    while ($("chat").children.length > 40) $("chat").firstChild.remove();
-  });
-  es.addEventListener("host_typing_end", () => { const t = $("typing-msg"); if (t) t.remove(); });
-  es.addEventListener("gift", (e) => { const ev = JSON.parse(e.data); addGiftMsg(ev); showCombo(ev); });
-  es.addEventListener("presence", (e) => showJoin(JSON.parse(e.data).name));
-  es.addEventListener("stats", (e) => setStats(JSON.parse(e.data)));
-  es.onerror = () => {}; /* EventSource reconnect otomatis */
+let pollId = null, pollCursor = 0, pollTimer = null;
+
+function handleEvent(ev) {
+  if (ev.type === "comment") {
+    const m = ev.data; if (m.isHost) speak(m.text); else addMsg(m); // pesan HOST disembunyikan dari chat (suara tetap jalan)
+  } else if (ev.type === "gift") {
+    const g = ev.data; addGiftMsg(g); showCombo(g); orbShock();
+  } else if (ev.type === "presence") {
+    showJoin(ev.data.name + (ev.data.join ? " bergabung" : " keluar"));
+  } else if (ev.type === "stats") {
+    setStats(ev.data);
+  }
 }
-connect();
+
+function orbShock() { // gift/combo → pulsa kejut di orb JARVIS
+  const a = $("avatar-big"); a.classList.remove("shock"); void a.offsetWidth; a.classList.add("shock");
+  setTimeout(() => a.classList.remove("shock"), 800);
+}
+function pollLoop() {
+  clearTimeout(pollTimer);
+  const q = "?id=" + encodeURIComponent(pollId || "") + "&since=" + pollCursor;
+  fetch("/api/poll" + q).then((r) => r.json()).then((d) => {
+    if (!d.ok && d.rejoin) { joinLive(); return; }
+    pollCursor = d.cursor || pollCursor;
+    (d.events || []).forEach(handleEvent);
+  }).catch(() => {}).finally(() => { pollTimer = setTimeout(pollLoop, 1500); });
+}
+
+async function joinLive() {
+  // nama: localStorage, kalau belum ada → tanya sekali (bisa cancel)
+  let nm = meName && meName !== "Kamu" ? meName : (localStorage.getItem("dtl_name") || "");
+  if (!nm) {
+    const n = prompt("Nama kamu (tampil di komentar & sambutan host):", "");
+    if (n && n.trim()) { nm = n.trim().slice(0, 24); localStorage.setItem("dtl_name", nm); meName = nm; }
+  }
+  try { if (es) { es.close(); es = null; } } catch {}
+  try {
+    const r = await fetch("/api/join", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: nm || null }) }).then((x) => x.json());
+    if (r.ok) { pollId = r.id; pollCursor = r.cursor; }
+  } catch {}
+  pollLoop();
+}
+joinLive();
 
 /* ---------- suara host (Web Speech API) ---------- */
 let soundOn = localStorage.getItem("dtl_sound") !== "0"; // default: menyala
@@ -434,18 +522,59 @@ function loadVoices() { voices = window.speechSynthesis ? speechSynthesis.getVoi
 if ("speechSynthesis" in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
 
 function pickVoice() {
+  const want = localStorage.getItem("dtl_voice");
+  if (want) { const m = voices.find((v) => v.name === want); if (m) return m; }
   const idf = voices.filter((v) => /^id[-_]/i.test(v.lang));
   const female = idf.find((v) => /gadis|damayanti|female|wanita/i.test(v.name));
   return female || idf[0] || voices.find((v) => /^ms[-_]/i.test(v.lang)) || null;
 }
+let ttsCartesia = false;          // true kalau /api/tts/status bilang siap
+let cartesiaAudio = null;         // satu audio aktif aja
+async function speakCartesia(text) {
+  try {
+    const r = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!r.ok) return false;
+    const blob = await r.blob();
+    if (!blob.size) return false;
+    if (cartesiaAudio) { try { cartesiaAudio.pause(); } catch {} }
+    cartesiaAudio = new Audio(URL.createObjectURL(blob));
+    cartesiaAudio.onplay = () => $("avatar-big").classList.add("talking");
+    cartesiaAudio.onended = cartesiaAudio.onerror = () => {
+      $("avatar-big").classList.remove("talking");
+      if (cartesiaAudio) { URL.revokeObjectURL(cartesiaAudio.src); cartesiaAudio = null; }
+    };
+    await cartesiaAudio.play();
+    window.__speech = { last: text, t: Date.now(), voice: "cartesia-sonic" };
+    return true;
+  } catch { return false; }
+}
+(async () => {
+  try {
+    const s = await (await fetch("/api/tts/status")).json();
+    ttsCartesia = !!s.tts_on;
+  } catch {}
+})();
 function speak(text) {
-  if (!soundOn || !("speechSynthesis" in window)) return;
+  if (!soundOn) return;
   const clean = String(text).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F\u200D]/gu, " ").replace(/\s+/g, " ").trim();
   if (!clean) return;
+  if (ttsCartesia) {
+    speakCartesia(clean).then((ok) => { if (!ok && "speechSynthesis" in window) speakBrowser(clean); });
+    return;
+  }
+  speakBrowser(clean);
+}
+function speakBrowser(clean) {
+  if (!("speechSynthesis" in window)) return;
   const u = new SpeechSynthesisUtterance(clean);
   const v = pickVoice();
   if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "id-ID"; }
-  u.rate = 1.04; u.pitch = 1.12; u.volume = 1;
+  const lsN = (k, d) => { const v = parseFloat(localStorage.getItem(k)); return Number.isFinite(v) ? v : d; };
+  u.rate = lsN("dtl_rate", 1.04); u.pitch = lsN("dtl_pitch", 1.12); u.volume = lsN("dtl_vol", 1);
   u.onstart = () => $("avatar-big").classList.add("talking");
   u.onend = u.onerror = () => $("avatar-big").classList.remove("talking");
   try { speechSynthesis.cancel(); speechSynthesis.speak(u); } catch {}
@@ -470,7 +599,10 @@ $("c-form").addEventListener("submit", async (e) => {
   if (!text) return;
   if (!meName || meName === "Kamu") {
     const n = prompt("Nama kamu (tampil di komentar):", meName === "Kamu" ? "" : meName);
-    if (n && n.trim()) { meName = n.trim().slice(0, 24); localStorage.setItem("dtl_name", meName); }
+    if (n && n.trim()) {
+      meName = n.trim().slice(0, 24);
+      localStorage.setItem("dtl_name", meName);
+    }
   }
   $("c-input").value = "";
   const r = await fetch("/api/comment", {
@@ -512,7 +644,7 @@ async function sendGift(id) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ gift: id, name: meName, combo }),
   }).then((x) => x.json()).catch(() => null);
-  if (!r || !r.ok) toast("gagal kirim gift");
+  if (!r || !r.ok) { coin += g.coin; $("coin-n").textContent = fmt(coin); toast("gagal kirim gift"); } // refund: koin jangan hilang kalau server gagal
 }
 
 /* ---------- like + follow + share ---------- */
@@ -545,7 +677,7 @@ $("c-input").addEventListener("focus", () => { if (!meName || meName === "Kamu")
   renderGrid();
   setStats(s);
   setTopGifters(s.topGifters);
-  (s.recent || []).slice(-30).forEach(addMsg);
+  (s.recent || []).filter((m) => !m.isHost).slice(-30).forEach(addMsg); // riwayat: pesan HOST gak ditampilkan
   $("coin-n").textContent = fmt(coin);
   updSoundBtn();
 })();

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pengaturan — Demo TikTok Live</title>
+<style>
+  :root { --bg:#09090b; --panel:#16161a; --panel2:#1f1f26; --border:#2c2c35;
+          --text:#f1f1f4; --muted:#9a9aa5; --pink:#fe2c55; --cyan:#25f4ee; --gold:#ffd166; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; padding:24px 16px 60px; }
+  .wrap { max-width:980px; margin:0 auto; }
+  h1 { font-size:20px; display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  h1 .badge { background:var(--pink); font-size:10.5px; font-weight:800; letter-spacing:.8px; padding:2.5px 8px; border-radius:5px; }
+  .sub { color:var(--muted); font-size:12.5px; margin-bottom:18px; }
+  .sub a { color:var(--cyan); text-decoration:none; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .card h2 { font-size:13.5px; color:var(--gold); margin-bottom:12px; letter-spacing:.4px; text-transform:uppercase; }
+  .row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; font-size:13px; }
+  .row > label { color:#d9d9e2; flex:1; min-width:0; }
+  .row > label.toggle { flex:0 0 auto; color:inherit; } /* .toggle = <label> supaya pill bisa diklik */
+  .row small { color:var(--muted); }
+  input[type=text], input[type=number], input[type=password], textarea {
+    background:var(--panel2); border:1px solid var(--border); border-radius:8px; color:var(--text);
+    font-size:13px; padding:7px 10px; outline:none; width:100%; font-family:inherit;
+  }
+  input:focus, textarea:focus { border-color:var(--pink); }
+  input[type=number] { width:110px; text-align:right; }
+  .pair { display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+  .pair input[type=number] { width:76px; }
+  .pair span { color:var(--muted); font-size:11.5px; }
+  textarea { min-height:74px; resize:vertical; line-height:1.45; margin-bottom:10px; }
+  .full { margin-bottom:10px; } .full label { display:block; font-size:12.5px; color:#d9d9e2; margin-bottom:5px; }
+  .full label small { color:var(--muted); }
+  .lock { position:relative; }
+  .lock input { padding-right:64px; }
+  .lock span { position:absolute; right:8px; top:50%; transform:translateY(-50%); font-size:10.5px;
+               color:#4ade80; background:rgba(74,222,128,.12); padding:2px 7px; border-radius:6px; }
+  .toggle { position:relative; width:42px; height:24px; flex:0 0 auto; cursor:pointer; }
+  .toggle input { opacity:0; width:0; height:0; }
+  .toggle i { position:absolute; inset:0; background:var(--panel2); border:1px solid var(--border);
+              border-radius:999px; transition:.18s; cursor:pointer; }
+  .toggle i::before { content:""; position:absolute; width:16px; height:16px; left:3px; top:3px;
+                      background:var(--muted); border-radius:50%; transition:.18s; }
+  .toggle input:checked + i { background:rgba(254,44,85,.35); border-color:var(--pink); }
+  .toggle input:checked + i::before { transform:translateX(18px); background:var(--pink); }
+  .bar { position:sticky; bottom:0; margin-top:18px; background:rgba(9,9,11,.92); backdrop-filter:blur(6px);
+         border-top:1px solid var(--border); padding:12px 0; display:flex; gap:10px; align-items:center; }
+  .btn { background:var(--pink); border:0; color:#fff; font-weight:800; font-size:14px;
+         padding:11px 26px; border-radius:999px; cursor:pointer; }
+  .btn:active { transform:scale(.96); }
+  .btn.ghost { background:var(--panel2); border:1px solid var(--border); font-weight:600; }
+  #toast { position:fixed; left:50%; top:22px; transform:translateX(-50%); background:rgba(0,0,0,.85);
+           border:1px solid var(--border); padding:9px 18px; border-radius:10px; font-size:13px;
+           opacity:0; transition:.25s; pointer-events:none; z-index:9; }
+  #toast.show { opacity:1; }
+  #gate { position:fixed; inset:0; background:rgba(9,9,11,.96); display:none; z-index:10;
+          align-items:center; justify-content:center; padding:20px; }
+  #gate.show { display:flex; }
+  #gate .box { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:22px; max-width:420px; width:100%; }
+  #gate h3 { font-size:15px; margin-bottom:8px; } #gate p { font-size:12.5px; color:var(--muted); margin-bottom:12px; line-height:1.5; }
+  select { background:var(--panel2); border:1px solid var(--border); border-radius:8px; color:var(--text);
+           font-size:13px; padding:7px 8px; outline:none; width:100%; font-family:inherit; }
+  select:focus { border-color:var(--pink); }
+  input[type=range] { width:150px; accent-color:var(--pink); }
+  .note { font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚙ Pengaturan <span class="badge">LIVE</span></h1>
+  <div class="sub">Demo TikTok Live — perubahan langsung aktif & tersimpan ke config.json (auto-backup). Kecuali <b>port</b> (butuh restart). <a href="/">← ke live demo</a></div>
+
+  <form id="f">
+  <div class="grid">
+    <div class="card">
+      <h2>🤖 Bot penonton</h2>
+      <div class="row"><label for="tg-comments">Komentar bot</label><label class="toggle"><input type="checkbox" id="tg-comments" data-bind="demo.bot_comments_enabled"><i></i></label></div>
+      <div class="row"><label>Delay komentar <small>(ms min–maks)</small></label>
+        <span class="pair" data-range="demo.bot_comment_delay"><input type="number" data-end="min" min="0"><span>–</span><input type="number" data-end="max" min="0"></span></div>
+      <div class="row"><label for="tg-gifts">Gift bot</label><label class="toggle"><input type="checkbox" id="tg-gifts" data-bind="demo.bot_gifts_enabled"><i></i></label></div>
+      <div class="row"><label>Delay gift <small>(ms)</small></label>
+        <span class="pair" data-range="demo.bot_gift_delay"><input type="number" data-end="min" min="0"><span>–</span><input type="number" data-end="max" min="0"></span></div>
+      <div class="row"><label for="tg-joins">Join bot</label><label class="toggle"><input type="checkbox" id="tg-joins" data-bind="demo.bot_joins_enabled"><i></i></label></div>
+      <div class="row"><label>Delay join <small>(ms, 60000 = 1 menit)</small></label>
+        <span class="pair" data-range="demo.bot_join_delay"><input type="number" data-end="min" min="0"><span>–</span><input type="number" data-end="max" min="0"></span></div>
+      <div class="row"><label>Min koin gift bot</label><input type="number" data-bind="demo.bot_gift_min_coin" min="1"></div>
+      <div class="row"><label>Jeda balasan combo <small>(ms)</small></label><input type="number" data-bind="demo.combo_thanks_delay" min="0" step="100"></div>
+      <div class="row"><label>Min combo host makasih <small>(× / 🪙)</small></label>
+        <span class="pair"><input type="number" data-bind="demo.combo_thanks_min_combo" min="1"><span>×</span><input type="number" data-bind="demo.combo_thanks_min_coin" min="1"></span></div>
+    </div>
+
+    <div class="card">
+      <h2>🎤 Host AI</h2>
+      <div class="full"><label>Nama host</label><input type="text" data-bind="host_name" maxlength="24"></div>
+      <div class="full"><label>Persona / system prompt <small>(maks 4000 huruf, {name} = nama host)</small></label><textarea data-bind="host_persona" maxlength="4000" style="min-height:120px"></textarea></div>
+      <div class="row"><label for="tg-welcome">Sambut yang join</label><label class="toggle"><input type="checkbox" id="tg-welcome" data-bind="demo.host_welcome_on_join"><i></i></label></div>
+      <div class="row"><label>Interval min sambutan <small>(ms)</small></label><input type="number" data-bind="demo.welcome_min_interval" min="0" step="1000"></div>
+      <div class="row"><label>Peluang host balas bot <small>(0–1; user selalu 1)</small></label><input type="number" data-bind="demo.host_reply_chance" min="0" max="1" step="any"></div>
+      <div class="row"><label>Self-talk saat sepi <small>(dtk, 0 = mati)</small></label><input type="number" data-bind="selftalk_sec" min="0" step="5"></div>
+      <div class="row"><label>Jeda antar jawaban <small>(ms)</small></label>
+        <span class="pair" data-range="demo.host_answer_gap"><input type="number" data-end="min" min="0"><span>–</span><input type="number" data-end="max" min="0"></span></div>
+      <div class="row"><label>Max antrean host</label><input type="number" data-bind="demo.queue_max" min="1" max="100"></div>
+      <div class="row"><label>Max panjang balasan <small>(huruf)</small></label><input type="number" data-bind="demo.host_reply_max_len" min="10" max="500"></div>
+      <div class="full"><label>Template sambutan <small>(1/baris, {name} = nama penonton)</small></label><textarea data-list="host_welcome" maxlength="16000"></textarea></div>
+    </div>
+
+    <div class="card">
+      <h2>📈 Angka live</h2>
+      <div class="row"><label>Penonton awal</label><input type="number" data-bind="demo.viewers_start" min="0"></div>
+      <div class="row"><label>Penonton minimum</label><input type="number" data-bind="demo.viewers_min" min="0"></div>
+      <div class="row"><label>Interval fluktuasi <small>(ms)</small></label><input type="number" data-bind="demo.viewer_fluctuation_interval" min="1000" step="1000"></div>
+      <div class="row"><label>Jitter / drift penonton</label>
+        <span class="pair"><input type="number" data-bind="demo.viewer_jitter" min="0"><span>/</span><input type="number" data-bind="demo.viewer_drift" min="0"></span></div>
+      <div class="row"><label>Like awal</label><input type="number" data-bind="demo.likes_start" min="0"></div>
+      <div class="row"><label>Like per tick <small>(min–maks)</small></label>
+        <span class="pair"><input type="number" data-bind="demo.likes_min" min="0"><span>–</span><input type="number" data-bind="demo.likes_max" min="0"></span></div>
+      <div class="note">Angka awal hanya di-reset kalau kamu mengubahnya di sini; field lain tidak mempengaruhi counter berjalan.</div>
+    </div>
+
+    <div class="card">
+      <h2>🧠 LLM & Suara</h2>
+      <div class="full"><label>Base URL LLM</label><input type="text" data-bind="base_url"></div>
+      <div class="full"><label>Model</label><input type="text" data-bind="model"></div>
+      <div class="full"><label>Koneksi LLM <small>(pakai konfigurasi tersimpan — simpan dulu kalau baru ubah)</small></label>
+        <button type="button" class="btn ghost" id="llmtest" style="padding:8px 16px;font-size:13px">⚡ Uji koneksi</button>
+        <span id="llmtestres" class="note" style="display:inline;margin:0 0 0 8px"></span></div>
+      <div class="full lock"><label>API key LLM</label><input type="password" data-bind="api_key" autocomplete="off" placeholder="…"><span id="st-llm">?</span></div>
+      <div class="full"><label>Voice ID TTS (Cartesia)</label><input type="text" data-bind="tts_voice_id"></div>
+      <div class="full"><label>Model TTS / bahasa</label>
+        <span class="pair"><input type="text" data-bind="tts_model" style="width:60%"><input type="text" data-bind="tts_lang" style="width:34%"></span></div>
+      <div class="full lock"><label>API key TTS</label><input type="password" data-bind="tts_api_key" autocomplete="off" placeholder="…"><span id="st-tts">?</span></div>
+      <div class="note">Kosongkan field key = tidak diubah. Key tidak pernah ditampilkan kembali oleh server.</div>
+    </div>
+
+    <div class="card">
+      <h2>🔊 Suara host (browser)</h2>
+      <div class="full"><label>Voice <small>(Web Speech)</small></label><select id="vsel"></select></div>
+      <div class="row"><label>Rate <small id="vrval"></small></label><input type="range" id="vrate" min="0.5" max="1.5" step="0.01"></div>
+      <div class="row"><label>Pitch <small id="vpval"></small></label><input type="range" id="vpitch" min="0.5" max="1.5" step="0.01"></div>
+      <div class="row"><label>Volume <small id="vvval"></small></label><input type="range" id="vvol" min="0" max="1" step="0.05"></div>
+      <div class="full" style="margin-top:2px"><button type="button" class="btn ghost" id="vtest" style="padding:8px 16px;font-size:13px">🔊 Test suara</button>
+        <span id="vtestres" class="note" style="display:inline;margin:0 0 0 8px"></span></div>
+      <div class="note">Tersimpan di browser ini (localStorage), berlaku untuk TTS browser halaman live. Kalau TTS Cartesia aktif, suara ikut Voice ID Cartesia di atas.</div>
+    </div>
+
+    <div class="card">
+      <h2>📋 Daftar</h2>
+      <div class="full"><label>Nama bot penonton <small>(1/baris, maks 100)</small></label><textarea data-list="bot_names" style="min-height:110px"></textarea></div>
+      <div class="full"><label>Komentar bot <small>(1/baris, maks 300)</small></label><textarea data-list="bot_lines" style="min-height:110px"></textarea></div>
+      <div class="full"><label>Pemberi gift bot <small>(1/baris)</small></label><textarea data-list="bot_gifters" style="min-height:60px"></textarea></div>
+    </div>
+
+    <div class="card">
+      <h2>🖥 Server</h2>
+      <div class="row"><label>Port <small>(berlaku setelah restart)</small></label><input type="number" data-bind="port" min="1" max="65535"></div>
+      <div class="note">
+        • Delay baru berlaku untuk jadwal bot berikutnya (loop tidak di-restart).<br>
+        • Toggle on/off berlaku langsung.<br>
+        • config.json selalu di-backup ke <b>backup/<tanggal>/</b> sebelum ditimpa.<br>
+        • Endpoint: GET/POST <b>/api/settings</b> (wajib <b>?key=</b> atau header <b>x-settings-key</b>).
+      </div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <button class="btn" type="submit">💾 Simpan & terapkan</button>
+    <button class="btn ghost" type="button" id="reload">↻ Muat ulang</button>
+    <span id="statustext" class="note"></span>
+  </div>
+  </form>
+</div>
+
+<div id="toast"></div>
+<div id="gate">
+  <div class="box">
+    <h3>🔐 Butuh key pengaturan</h3>
+    <p>Key ada di log server (<code>[setting] http://…/setting?key=…</code>) atau <code>config.json → settings_key</code>.</p>
+    <input type="text" id="keyinput" placeholder="tempel key di sini" autocomplete="off">
+    <button class="btn" id="keybtn" style="margin-top:12px;width:100%">Buka pengaturan</button>
+    <div id="gateerr" style="color:#fe2c55;font-size:12px;margin-top:8px"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const qp = new URLSearchParams(location.search);
+let key = qp.get("key") || sessionStorage.getItem("dtl_skey") || "";
+if (qp.get("key")) sessionStorage.setItem("dtl_skey", key);
+let ORIG = null; // snapshot terakhir dari server — supaya simpan = kirim cuma yang berubah
+
+let toastTimer = null;
+function toast(msg, ok) {
+  $("toast").textContent = msg;
+  $("toast").style.borderColor = ok === false ? "#fe2c55" : "#2c2c35";
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $("toast").classList.remove("show"), 2600);
+}
+async function api(path, opts) {
+  const r = await fetch(path + (path.includes("?") ? "&" : "?") + "key=" + encodeURIComponent(key), opts);
+  return { status: r.status, data: await r.json().catch(() => ({})) };
+}
+function gate(show) { $("gate").classList.toggle("show", show); }
+
+function fill(s) {
+  document.querySelectorAll("[data-bind]").forEach((el) => {
+    const k = el.dataset.bind, v = k.startsWith("demo.") ? s.demo?.[k.slice(5)] : s[k];
+    if (v == null) return;
+    if (el.type === "checkbox") el.checked = !!v; else el.value = v;
+  });
+  document.querySelectorAll("[data-range]").forEach((el) => {
+    const v = s.demo?.[el.dataset.range.replace(/^demo\./, "")]; // data-range = "demo.x" → kunci demo = "x"
+    if (!Array.isArray(v)) return;
+    el.querySelector('[data-end="min"]').value = v[0];
+    el.querySelector('[data-end="max"]').value = v[1];
+  });
+  document.querySelectorAll("[data-list]").forEach((el) => {
+    const v = s[el.dataset.list];
+    if (Array.isArray(v)) el.value = v.join("\n");
+  });
+  $("st-llm").textContent = s.api_key_set ? "tersimpan" : "belum";
+  $("st-tts").textContent = s.tts_api_key_set ? "tersimpan" : "belum";
+  $("statustext").textContent = "dimuat " + new Date().toLocaleTimeString("id-ID");
+  ORIG = JSON.parse(JSON.stringify(s));
+  $("gateerr").textContent = "";
+}
+async function load() {
+  if (!key) { gate(true); return; }
+  const { status, data } = await api("/api/settings");
+  if (status === 403) { gate(true); $("gateerr").textContent = "Key ditolak — periksa lagi (ada di log server / config.settings_key)."; return; }
+  if (!data.ok) { toast("gagal memuat: " + (data.error || status), false); return; }
+  gate(false);
+  fill(data.settings);
+}
+function collect() {
+  const s = {}, demo = {};
+  const origOf = (k) => k.startsWith("demo.") ? (ORIG?.demo || {})[k.slice(5)] : (ORIG || {})[k];
+  document.querySelectorAll("[data-bind]").forEach((el) => {
+    const k = el.dataset.bind;
+    let v;
+    if (el.type === "checkbox") { v = el.checked; if (v === !!origOf(k)) return; } // gak berubah → jangan dikirim
+    else if (el.type === "number") {
+      if (el.value === "") return; v = Number(el.value); if (!Number.isFinite(v)) return;
+      const o = origOf(k);
+      if (o != null && Math.abs(v - Number(o)) <= 1e-6) return; // epsilon: step browser bisa geser float (0.35)
+      v = Math.round(v * 1e6) / 1e6;
+    }
+    else { v = el.value.trim(); if (!v) return; if (v === String(origOf(k) ?? "").trim()) return; }
+    if (k.startsWith("demo.")) demo[k.slice(5)] = v; else s[k] = v;
+  });
+  document.querySelectorAll("[data-range]").forEach((el) => {
+    const lo = el.querySelector('[data-end="min"]').value, hi = el.querySelector('[data-end="max"]').value;
+    if (lo === "" || hi === "") return;
+    const rk = el.dataset.range.replace(/^demo\./, ""), val = [Number(lo), Number(hi)];
+    const o = (ORIG?.demo || {})[rk];
+    if (Array.isArray(o) && o.length === 2 && Math.abs(val[0] - o[0]) <= 1e-6 && Math.abs(val[1] - o[1]) <= 1e-6) return;
+    demo[rk] = val;
+  });
+  document.querySelectorAll("[data-list]").forEach((el) => {
+    const arr = el.value.split("\n").map((x) => x.trim()).filter(Boolean);
+    const o = (ORIG || {})[el.dataset.list];
+    if (Array.isArray(o) && o.length === arr.length && arr.every((x, i) => x === String(o[i]).trim())) return;
+    if (arr.length) s[el.dataset.list] = arr;
+  });
+  if (Object.keys(demo).length) s.demo = demo;
+  return s;
+}
+$("f").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const payload = collect();
+  const n = Object.keys(payload).filter((k) => k !== "demo").length + (payload.demo ? Object.keys(payload.demo).length : 0);
+  if (!n) { toast("tidak ada perubahan ✓", false); return; } // collect() dirty → counter live TIDAK ikut ter-reset
+  const btn = e.submitter || document.querySelector("#f .btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Menyimpan…"; }
+  const { status, data } = await api("/api/settings", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+  });
+  if (btn) { btn.disabled = false; btn.textContent = "💾 Simpan & terapkan"; }
+  if (status === 403) { gate(true); toast("key ditolak", false); return; }
+  if (!data.ok) { toast("gagal: " + (data.error || status), false); return; }
+  document.querySelectorAll("input[type=password]").forEach((el) => { el.value = ""; }); // key yang tadi dikirim jangan nempel
+  toast(`tersimpan ✓ (${n} perubahan)`, true);
+  load();
+});
+$("reload").onclick = load;
+$("keybtn").onclick = () => {
+  key = $("keyinput").value.trim();
+  if (key) sessionStorage.setItem("dtl_skey", key);
+  $("gateerr").textContent = "";
+  load();
+};
+/* ---- uji koneksi LLM ---- */
+$("llmtest").onclick = async () => {
+  const b = $("llmtest"), r = $("llmtestres");
+  b.disabled = true; r.textContent = "menguji…";
+  const t0 = Date.now();
+  try {
+    const resp = await fetch("/api/llmtest?key=" + encodeURIComponent(key));
+    const d = await resp.json();
+    if (resp.status === 403) { gate(true); r.textContent = "key ditolak"; }
+    else if (d.ok) r.textContent = "✓ " + (d.latencyMs / 1000).toFixed(1) + "s — " + d.reply;
+    else r.textContent = "✗ " + (d.error || "gagal") + " (" + ((Date.now() - t0) / 1000).toFixed(1) + "s)";
+  } catch (e) { r.textContent = "✗ " + (e.message || e); }
+  b.disabled = false;
+};
+/* ---- suara host (Web Speech — localStorage, satu origin dgn halaman live) ---- */
+const vsel = $("vsel"), vrate = $("vrate"), vpitch = $("vpitch"), vvol = $("vvol");
+function vsRefresh() {
+  if (!("speechSynthesis" in window)) { vsel.innerHTML = "<option>browser tanpa Web Speech</option>"; return; }
+  const list = speechSynthesis.getVoices() || [];
+  const saved = localStorage.getItem("dtl_voice") || "";
+  vsel.innerHTML = list.map((v) => '<option value="' + v.name.replace(/"/g, """) + '">' + v.name + " — " + v.lang + "</option>").join("");
+  if (saved && list.some((v) => v.name === saved)) vsel.value = saved;
+  else {
+    const auto = list.find((v) => /^id[-_]/i.test(v.lang) && /gadis|damayanti|female/i.test(v.name)) || list.find((v) => /^id[-_]/i.test(v.lang));
+    if (auto) vsel.value = auto.name;
+  }
+}
+function vsShow() {
+  $("vrval").textContent = " " + Number(vrate.value).toFixed(2);
+  $("vpval").textContent = " " + Number(vpitch.value).toFixed(2);
+  $("vvval").textContent = " " + Number(vvol.value).toFixed(2);
+}
+function vsSave() {
+  localStorage.setItem("dtl_voice", vsel.value);
+  localStorage.setItem("dtl_rate", vrate.value);
+  localStorage.setItem("dtl_pitch", vpitch.value);
+  localStorage.setItem("dtl_vol", vvol.value);
+  vsShow();
+}
+if ("speechSynthesis" in window) { vsRefresh(); speechSynthesis.onvoiceschanged = vsRefresh; }
+vrate.value = localStorage.getItem("dtl_rate") || 1.04;
+vpitch.value = localStorage.getItem("dtl_pitch") || 1.12;
+vvol.value = localStorage.getItem("dtl_vol") || 1;
+vsel.onchange = vsSave;
+vrate.oninput = vrate.onchange = vsSave;
+vpitch.oninput = vpitch.onchange = vsSave;
+vvol.oninput = vvol.onchange = vsSave;
+vsShow();
+$("vtest").onclick = () => {
+  vsSave();
+  if (!("speechSynthesis" in window)) { $("vtestres").textContent = "browser tanpa Web Speech"; return; }
+  const u = new SpeechSynthesisUtterance("Tes suara host, satu dua tiga.");
+  const v = (speechSynthesis.getVoices() || []).find((x) => x.name === vsel.value);
+  if (v) { u.voice = v; u.lang = v.lang; }
+  u.rate = Number(vrate.value); u.pitch = Number(vpitch.value); u.volume = Number(vvol.value);
+  u.onend = () => $("vtestres").textContent = "✓ selesai";
+  $("vtestres").textContent = "memutar…";
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+};
+load();
+</script>
+</body>
+</html>

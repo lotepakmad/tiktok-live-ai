@@ -1,5 +1,6 @@
 # RAHASIA — jangan pernah commit API key
 config.json
+proxy.txt
 
 # Biner besar (download manual, lihat README)
 cloudflared.exe
